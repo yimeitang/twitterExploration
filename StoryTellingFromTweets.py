@@ -253,4 +253,55 @@ end = time.time()
 print ("It takes ", round((end-start),4), "seconds to load " + str(numTweets) + " lines from local text file to sqlite database")
 
 
-#%%
+#%%Connect to the database
+conn = sqlite3.connect('storyTelling.db')
+c = conn.cursor()
+
+
+#%% Business Insight One : How many twitter accounts have been replied to?
+start = time.time()  
+q="SELECT Count( DISTINCT in_reply_to_user_id) FROM Tweets;"
+numReplyBackUser=c.execute(q).fetchall()[0][0]
+end= time.time()
+print("It takes " + str(round((end-start),4)) + " seconds to execute this sql command")
+print("There are {} unique twitter accounts that have been replied to among these 1M tweets".format(numReplyBackUser))
+print("It means that {}% of the 1M tweets are reply tweets, not original tweets.".format(round((numReplyBackUser/1000000)*100),4))
+replyFile=open('replyFile.txt','w')
+replyPercent= round(numReplyBackUser/1000000,4)
+replyFile.write("Types of Tweets" + "\t" + "Percentage" + "\n")
+replyFile.write('Original tweets'+ "\t"+ str(1-replyPercent)+"\n")
+replyFile.write('Reply tweets'"\t"+ str(replyPercent)+"\n")
+replyFile.close()
+
+#%%Business Insight Two: Get Lengths of Tweets
+start = time.time()  
+q1="SELECT Count(*) FROM Tweets WHERE LENGTH(Text) = (SELECT Min(LENGTH(Text)) FROM Tweets);"
+q2="SELECT MIN(LENGTH(TEXT)) FROM Tweets;"
+q3="SELECT MAX(LENGTH(TEXT)) FROM Tweets;"
+q4="SELECT AVG(LENGTH(TEXT)) FROM Tweets;"
+numMinLengthTweets =c.execute(q1).fetchall()[0][0]
+minLength=c.execute(q2).fetchall()[0][0]
+maxLength=c.execute(q3).fetchall()[0][0]
+avgLength=round(c.execute(q4).fetchall()[0][0],2)
+end= time.time()
+print("{} tweets have shortest length of {}".format(numMinLengthTweets,minLength))
+print("The longest length of tweet is {}".format(maxLength))
+print("The average length of tweet is {}".format(avgLength,2))
+tweetLengthFile=open('tweetLengthFile.txt','w')
+tweetLengthFile.write("Length of Tweets" + "\t" + "Length" + "\n")
+tweetLengthFile.write('Shortest'+ "\t"+ str(minLength)+"\n")
+tweetLengthFile.write('Longest'+ "\t"+ str(maxLength)+"\n")
+tweetLengthFile.write('Average'+ "\t"+ str(avgLength)+"\n")
+tweetLengthFile.close()
+
+#%%Business Insight Three: Map User's Location 
+start = time.time()  
+q="SELECT Name, AVG(Longitude), AVG(Latitude) FROM Users, Geo, Tweets WHERE Users.ID=Tweets.UserID AND Geo.ID=Tweets.GeoID AND Longitude is NOT NULL GROUP BY Name;"
+userList=c.execute(q).fetchall()
+userLocFile= open('userLocFile.txt','w',encoding='utf-8')
+userLocFile.write("User_Name" +"\t"+"Latitude"+"\t"+"Longitude"+"\n")
+for user in userList:
+    userLocFile.write(user[0].strip()+"\t" +str(user[1]).strip() +"\t"+str(user[2]).strip()  +"\n")
+userLocFile.close()
+end= time.time()
+print("It takes " + str(round((end-start),4)) + " seconds to execute this sql command")
