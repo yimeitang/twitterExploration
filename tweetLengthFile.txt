@@ -1,0 +1,4 @@
+Length of Tweets	Length
+Shortest	1
+Longest	434
+Average	68.83

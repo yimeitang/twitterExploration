@@ -1,0 +1,3 @@
+Types of Tweets	Percentage
+Original tweets	0.8196
+Reply tweets	0.1804
